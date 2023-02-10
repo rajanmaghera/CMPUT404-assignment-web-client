@@ -28,7 +28,16 @@ import urllib.parse
 def get_request(url, host, args=None):
     """Return a GET request body with headers"""
 
-    encoded_args = urllib.parse.urlencode(args) if args != None else ""
+    # we want to add the args to the url
+
+    # if there is a ? in the url, the separator is &
+    # else, the separator is ?
+    if "?" in url:
+        separator = "&"
+    else:
+        separator = "?"
+
+    encoded_args = separator + urllib.parse.urlencode(args) if args != None else ""
 
     return f"""GET {url}{encoded_args} HTTP/1.1\r
 Host: {host}\r
@@ -67,17 +76,21 @@ class HTTPClient(object):
 
         # parse the url
         self.get_host_port(url)
+        self.get_url_params(url)
 
         # connect to the server
         self.connect(self.host, self.port)
 
         # send the request based on the method
         if method == "GET":
-            self.sendall(get_request(self.url, self.host, args))
+            req = get_request(self.url, self.host, args)
         elif method == "POST":
-            self.sendall(post_request(self.url, self.host, args))
+            req = post_request(self.url, self.host, args)
         else:
             return None
+
+        # send the request
+        self.socket.sendall(req.encode())
 
         # receive the response
         data = self.recvall(self.socket)
@@ -85,6 +98,16 @@ class HTTPClient(object):
 
         # return the response
         return HTTPResponse(self.get_code(data), self.get_body(data))
+
+    def get_url_params(self, url):
+        """Add the query params back to the url"""
+
+        # parse the url
+        parsed = urllib.parse.urlparse(url)
+
+        # append query params back to url
+        if parsed.query != "":
+            self.url = parsed.path + "?" + parsed.query
 
     def get_host_port(self,url):
         """Parse the url and return the host and port"""
@@ -149,7 +172,6 @@ class HTTPClient(object):
 
     def GET(self, url, args=None):
         """Execute a GET request"""
-        # TODO determine if arguments are necessary
         return self.request(url, "GET", args)
 
     def POST(self, url, args=None):
@@ -158,7 +180,7 @@ class HTTPClient(object):
 
     def command(self, url, command="GET", args=None):
         """Parse a command and execute it"""
-        self.request(url, command, args)
+        return self.request(url, command, args)
 
 if __name__ == "__main__":
     client = HTTPClient()
