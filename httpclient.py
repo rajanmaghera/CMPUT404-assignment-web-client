@@ -42,6 +42,7 @@ def get_request(url, host, args=None):
     return f"""GET {url}{encoded_args} HTTP/1.1\r
 Host: {host}\r
 Connection: close\r
+User-Agent: MyCool404Client/1.0\r
 \r
 """
 
@@ -53,6 +54,7 @@ def post_request(url, host, args=None):
     return f"""POST {url} HTTP/1.1\r
 Host: {host}\r
 Connection: close\r
+User-Agent: MyCool404Client/1.0\r
 Content-Type: application/x-www-form-urlencoded\r
 Content-Length: {len(encoded_args)}\r
 \r
