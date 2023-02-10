@@ -27,7 +27,10 @@ import urllib.parse
 
 def get_request(url, host, args=None):
     """Return a GET request body with headers"""
-    return f"""GET {url} HTTP/1.1\r
+
+    encoded_args = urllib.parse.urlencode(args) if args != None else ""
+
+    return f"""GET {url}{encoded_args} HTTP/1.1\r
 Host: {host}\r
 Connection: close\r
 \r
@@ -36,23 +39,15 @@ Connection: close\r
 def post_request(url, host, args=None):
     """Return a POST request body with headers"""
 
-    if args != None:
-        return f"""POST {url} HTTP/1.1\r
-Host: {host}\r
-Connection: close\r
-Content-Type: application/x-www-form-urlencoded\r
-Content-Length: {len(urllib.parse.urlencode(args))}\r
-\r
-{urllib.parse.urlencode(args)}"""
+    encoded_args = urllib.parse.urlencode(args) if args != None else ""
 
-    else:
-        return f"""POST {url} HTTP/1.1\r
+    return f"""POST {url} HTTP/1.1\r
 Host: {host}\r
 Connection: close\r
 Content-Type: application/x-www-form-urlencoded\r
-Content-Length: 0\r
+Content-Length: {len(encoded_args)}\r
 \r
-"""
+{encoded_args}"""
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -78,7 +73,7 @@ class HTTPClient(object):
 
         # send the request based on the method
         if method == "GET":
-            self.sendall(get_request(self.url, self.host))
+            self.sendall(get_request(self.url, self.host, args))
         elif method == "POST":
             self.sendall(post_request(self.url, self.host, args))
         else:
@@ -96,8 +91,6 @@ class HTTPClient(object):
 
         # parse the url
         parsed = urllib.parse.urlparse(url)
-
-        print(url)
 
         # store attributes
         self.host = parsed.hostname
